@@ -1,12 +1,15 @@
 <?php
-namespace Brick\Router;
+namespace xudid\Router;
 
- use GuzzleHttp\Psr7\ServerRequest;
- use Interop\Http\Server\MiddlewareInterface;
- use Psr\Http\Message\ServerRequestInterface;
- use Psr\Http\Message\ResponseInterface;
- use Interop\Http\Server\RequestHandlerInterface;
- /**
+
+use GuzzleHttp\Psr7\ServerRequest;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
+
+/**
   * Router register Route(s) and parse them
   * with method run
   */
@@ -57,7 +60,7 @@ class Router implements MiddlewareInterface
                       $returnview=true):Route
  {
 
-    $route = new \Brick\Router\Route($path,$callable,$displayname,$returnview);
+    $route = new Route($path,$callable,$displayname,$returnview);
     $this->routes['GET'][$scope][]=$route;
 
     return $route;
@@ -81,7 +84,7 @@ class Router implements MiddlewareInterface
                        string $displayname=null,
                        bool $returnview=true):Route
  {
-   $route = new \Brick\Router\Route($path,$callable,$displayname,$returnview);
+   $route = new xudid\Router\Route($path,$callable,$displayname,$returnview);
    $this->routes['POST'][$scope][]=$route;
    return $route;
  }
@@ -183,19 +186,18 @@ public function getUrlsMatrix(string $scope,string $path,string $id=null,array $
     return $urls;
   }
 
-/**
- * Run registred routes exploration
- * If a route match put success attribute at true on the request
- * Set the route attribut on the request and the returnAppPage to true
- * on it .
- * Else set success attribute at false on the request
- * Return both the handled response
- * @param ServerRequestInterface $serverrequest  request made by the user
- * @param RequestHandlerInterface $handler the fianl response handler
- * @return ResponseInterface
- */
-  public function process(ServerRequestInterface $serverrequest,
-                          RequestHandlerInterface $handler):ResponseInterface
+    /**
+     * Run registred routes exploration
+     * If a route match put success attribute at true on the request
+     * Set the route attribut on the request and the returnAppPage to true
+     * on it .
+     * Else set success attribute at false on the request
+     * Return both the handled response
+     * @param ServerRequestInterface $request
+     * @param RequestHandlerInterface $handler the fianl response handler
+     * @return ResponseInterface
+     */
+  public function process(ServerRequestInterface $serverrequest, RequestHandlerInterface $handler): ResponseInterface
   {
     $response = $handler->handle($serverrequest);
     $this->url = ($serverrequest->getUri()->getPath());
@@ -254,6 +256,15 @@ public function getUrlsMatrix(string $scope,string $path,string $id=null,array $
        $hasparams = true;
      }
      return $hasparams ;
+   }
+
+    /**
+     * @param string $name the name of the we want to generate an url from
+     * @param array $param parameters needed to generate this url
+     */
+    public function generateUrl(string $name, array $param=[])
+   {
+
    }
 }
 

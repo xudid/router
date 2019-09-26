@@ -1,0 +1,23 @@
+{
+    "name": "xudid/router",
+    "description": "A router for PHP Apps",
+    "type": "library",
+    "require-dev": {
+        "phpunit/phpunit": "^8.3"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Didier Moindreau",
+            "email": "dmoindreau@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"xudid\\": "src/xudid"}
+    },
+    "require": {
+        "guzzlehttp/psr7": "^1.6",
+        "psr/http-server-middleware": "^1.0",
+        "psr/http-message": "^1.0"
+    }
+}
