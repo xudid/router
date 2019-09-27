@@ -2,6 +2,7 @@
 namespace xudid\Router;
 
 
+use xudid\Router\RouterException;
 use GuzzleHttp\Psr7\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -19,6 +20,8 @@ class Router implements MiddlewareInterface
    * @var string $url
    */
   private $url=null;
+
+  private $authorizedMethods = [];
   /**
    * @var array $routes
    */
@@ -34,6 +37,25 @@ class Router implements MiddlewareInterface
   * @var  $currentRoute;
   */
   private $currentRoute;
+
+  private function addRoute(
+                             string $method,
+                             string $scope,
+                             string $path,
+                             string $name,
+                             $callable
+                           ) :Route
+  {
+      if(in_array($method, $this->authorizedMethods))
+      {
+          $route = new Route($path,$name, $callable);
+          $this->routes[$method][$scope][$name]=$route;
+          return $route;
+      } else {
+          throw new RouterException("Try to add a route with an unauthorized method");
+      }
+
+  }
   /**
    *
    */
@@ -41,150 +63,74 @@ class Router implements MiddlewareInterface
   {
 
   }
-  /**
-   * Register a Route to a ressource asked with a HTTP GET method
-   * @param string $scope the logic url domain without a '/'
-   * @param string $path the actual url path to the ressource with beginning '/'
-   * @param array|callable $callable callback function to call if route match
-   * the array contains in order an object , the name of a function to call
-   * on this object , the callback function to call after that
-   * @param string|null $displayname string to display in menu
-   * @param bool $returnview if it must return a view when route match
-   * @return Route
-   *
-   */
-  public function get(string $scope,
-                      string $path,
-                       $callable,
-                      string $displayname=null,
-                      $returnview=true):Route
+    /**
+     * Register a Route to a ressource asked with a HTTP POST method
+     * @param string $scope the logic url domain without a '/'
+     * @param string $path the actual url path to the ressource with beginning '/'
+     * @param string|null $name string to display in menu
+     * @param array|callable $callable callback function to call if route match
+     * the array contains in order an object , the name of a function to call
+     * on this object , the callback function to call after that
+     * @return Route
+     *
+     */
+  public function get(
+                        string $scope,
+                        string $path,
+                        string $name,
+                        $callable
+                    ):Route
  {
 
-    $route = new Route($path,$callable,$displayname,$returnview);
-    $this->routes['GET'][$scope][]=$route;
-
-    return $route;
+    return $this->addRoute("GET", $scope, $path, $name, $callable);
 
  }
 /**
  * Register a Route to a ressource asked with a HTTP POST method
  * @param string $scope the logic url domain without a '/'
  * @param string $path the actual url path to the ressource with beginning '/'
+ * @param string|null $name string to display in menu
  * @param array|callable $callable callback function to call if route match
  * the array contains in order an object , the name of a function to call
  * on this object , the callback function to call after that
- * @param string|null $displayname string to display in menu
- * @param bool $returnview if it must return a view when route match
  * @return Route
  *
  */
-  public function post(string $scope,
-                       string $path,
-                        $callable,
-                       string $displayname=null,
-                       bool $returnview=true):Route
+  public function post(
+                        string $scope,
+                        string $path,
+                        string $name,
+                        $callable
+                    ):Route
  {
-   $route = new xudid\Router\Route($path,$callable,$displayname,$returnview);
-   $this->routes['POST'][$scope][]=$route;
-   return $route;
+
+     return $this->addRoute("POST", $scope, $path, $name, $callable);
+
  }
 
- /**
-  * Return  an array with route in the scope except given path and
-  * an array of allowed path
-  * @param string $scope the logic url domain without a '/'
-  * @param string $path the actual url path to the ressource without beginning '/'
-  * @param string|null $id if we need an id to access the ressource
-  * @param array $allowedlinks array of allowed ressource from the actual path
-  * @return array
-  *
-  */
-public function getUrlsMatrix(string $scope,string $path,string $id=null,array $allowedlinks)
- {
-   $urls=[];
-   if(array_key_exists($scope, $this->routes['POST']))
-     {
-       foreach ($this->routes['POST'][$scope] as $key => $value)
-       {
+    public function put(
+        string $scope,
+        string $path,
+        string $name,
+        $callable
+    ):Route
+    {
 
-       $cpath = $value->getPath();
-       $display = $value->getDisplayName();
-       $mcpath=$cpath;
-       //Path has params and id is not null and
-       if($this->hasParams($path)&&!is_null($id))
-       {
-         $mcpath = str_replace(":id", $id, $cpath );
+        return $this->addRoute("PUT", $scope, $path, $name, $callable);
 
-         if(in_array($cpath, $allowedlinks)&&$cpath!=$path)
-         {
-           if($display !=""||$display!=null)
-           {
-             $urls["POST"][] = [$mcpath=>$value->getDisplayName()];
-           }
-
-         }
-       }
-       else
-       {
-
-         if(in_array($cpath, $allowedlinks)&&$cpath!=$path)
-         {
-           if(!$this->hasParams($cpath))
-           {
-             //$displayname = $value->getDisplayName();
-             if($display !=""||$display!=null)
-             {
-               $urls["POST"][] = [$mcpath=>$value->getDisplayName()];
-             }
-           }
-
-
-         }
-       }
-
-      }
     }
 
-    if(array_key_exists($scope, $this->routes['GET']))
+    public function delate(
+        string $scope,
+        string $path,
+        string $name,
+        $callable
+    ):Route
     {
-    foreach ($this->routes['GET'][$scope] as $key => $value)
-    {
-      $cpath = $value->getPath();
-      $display = $value->getDisplayName();
-      $mcpath=$cpath;
-      if($this->hasParams($path)&&!is_null($id))
-      {
-        $mcpath = str_replace(":id", $id, $cpath );
 
-        if(in_array($cpath, $allowedlinks)&&$cpath!=$path)
-        {
-          $displayname = $value->getDisplayName();
-          if($displayname !=""||$displayname!=null)
-          {
-            $urls["GET"][] = [$mcpath=>$display];
-          }
-        }
-      }
-      else
-      {
-        if(in_array($cpath, $allowedlinks)&&$cpath!=$path)
-        {
-          if(!$this->hasParams($cpath))
-          {
-            $displayname = $value->getDisplayName();
-            if($displayname !=""||$displayname!=null)
-            {
-              $urls["GET"][] = [$mcpath=>$display];
-            }
-        }
-        }
-      }
+        return $this->addRoute("DELETE", $scope, $path, $name, $callable);
 
     }
-  }
-
-    return $urls;
-  }
 
     /**
      * Run registred routes exploration
@@ -249,23 +195,46 @@ public function getUrlsMatrix(string $scope,string $path,string $id=null,array $
  */
    private function hasParams(string $url):bool
    {
-     $hasparams = false;
-     $match = \preg_match('#:([\w]+)#',$url,$matches);
-     if($match === 1)
-     {
-       $hasparams = true;
-     }
-     return $hasparams ;
+       return  \preg_match('#:([\w]+)#',$url,$matches) ?true:false;
    }
 
     /**
      * @param string $name the name of the we want to generate an url from
      * @param array $param parameters needed to generate this url
+     * @return string
+     * @throw RouterException
      */
-    public function generateUrl(string $name, array $param=[])
+    public function generateUrl(string $scope, string $name, array $params=[])
    {
+       $url = "test";
+       if (array_key_exists($scope,$this->routes['GET']) && array_key_exists($name,$this->routes['GET'][$scope])) {
+           $route = $this->routes['GET'][$scope][$name];
+           $path = $route->getPath();
+           $routeParams = $route->getParams();
+           foreach ($params as $key => $value) {
+               if (array_key_exists($key, $routeParams)) {
+                   $pattern = "#(:" . $key . ")#";
+                   $replacement = $params[$key];
+                   $path = preg_replace($pattern, $replacement, $path);
+               }
+           }
+           $url = '/'.$path;
+       }
+
+       return $url;
 
    }
+
+    /**
+     * @param array $authorizedMethods
+     */
+    public function setAuthorizedMethods(array $authorizedMethods): self
+    {
+        $this->authorizedMethods = $authorizedMethods;
+        return $this;
+    }
+
+
 }
 
 
