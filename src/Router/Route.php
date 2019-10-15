@@ -86,8 +86,8 @@ class Route {
         $url = trim($path, '/');
         $pattern = "#^$this->path$#";
         if (!empty($this->params)) {
-            $matched = $this->matchWithParams($url);
-            return $matched? true : false;
+            $pattern = $this->matchWithParams($url);
+
            }
 
         $matched = preg_match($pattern, $url, $matches);
@@ -106,8 +106,6 @@ class Route {
         $i=0;
         $params = $matches[1];
         $n = count($params);
-        var_dump($url);
-        var_dump($n);
         $matches = [];
         while($i < $n) {
             $paramName = $params[$i];
