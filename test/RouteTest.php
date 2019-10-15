@@ -2,15 +2,15 @@
 
 namespace test;
 
-use phpDocumentor\Reflection\Types\Callable_;
+use GuzzleHttp\Psr7\Request;
 use PHPUnit\Framework\TestCase;
-use xudid\Router\{Route};
+use Router\{Route};
 
 class RouteTest extends TestCase
 {
     private function getRequest($path)
     {
-        return new \GuzzleHttp\Psr7\Request("GET", $path);
+        return new Request("GET", $path);
     }
 
     public function testCanConstruct()
@@ -19,7 +19,7 @@ class RouteTest extends TestCase
             echo "hello world";
         },);
         self::assertNotNull($route, "Route constructor must return an object instance");
-        self::assertInstanceOf(Route::class, $route, "Route constructor must return an object of xudid/Router/Route::class");
+        self::assertInstanceOf(Route::class, $route, "Route constructor must return an object of Router/Route::class");
     }
 
     public function testGetNameReturnString()

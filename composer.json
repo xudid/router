@@ -13,7 +13,9 @@
         }
     ],
     "autoload": {
-        "psr-4": {"xudid\\": "src/xudid"}
+        "psr-4": {
+                    "Router\\": "src/Router/"
+                 }
     },
     "require": {
         "guzzlehttp/psr7": "^1.6",

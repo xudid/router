@@ -1,9 +1,7 @@
 <?php
-namespace xudid\Router;
+namespace Router;
 
 
-use xudid\Router\RouterException;
-use GuzzleHttp\Psr7\ServerRequest;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -120,7 +118,7 @@ class Router implements MiddlewareInterface
 
     }
 
-    public function delate(
+    public function delete(
         string $scope,
         string $path,
         string $name,
@@ -129,6 +127,18 @@ class Router implements MiddlewareInterface
     {
 
         return $this->addRoute("DELETE", $scope, $path, $name, $callable);
+
+    }
+
+    public function options(
+        string $scope,
+        string $path,
+        string $name,
+        $callable
+    ):Route
+    {
+
+        return $this->addRoute("OPTIONS", $scope, $path, $name, $callable);
 
     }
 
@@ -148,7 +158,9 @@ class Router implements MiddlewareInterface
     $response = $handler->handle($serverrequest);
     $this->url = ($serverrequest->getUri()->getPath());
     $parts = \explode('/',$this->url);
-    $scope = $parts[1];
+    $scope = $parts[0];
+    if(empty($scope)){$scope = "default";}
+
     $method = $serverrequest->getMethod();
 
     //Enigmatic request
@@ -160,9 +172,9 @@ class Router implements MiddlewareInterface
     }
 
     //Walk through the routes
-    foreach ($this->routes[$method][$scope] as $route)
+    foreach ($this->routes[$method][$scope] as $name =>$route)
     {
-        if($route->match($this->url))
+        if($route->match($serverrequest))
         {
           $this->success = true;
           $this->currentRoute =$route;
@@ -176,7 +188,7 @@ class Router implements MiddlewareInterface
       $handler->handle($serverrequest
       ->withAttribute("success" , $this->success)
       ->withAttribute("route", $this->currentRoute)
-      ->withAttribute("returnAppPage", $this->currentRoute->isReturnAppPage()));
+     );
     }
     //We are lost no route found
     else
@@ -207,7 +219,11 @@ class Router implements MiddlewareInterface
     public function generateUrl(string $scope, string $name, array $params=[])
    {
        $url = "test";
-       if (array_key_exists($scope,$this->routes['GET']) && array_key_exists($name,$this->routes['GET'][$scope])) {
+       //Does it need an isRouteExist($method,$scope,$name):bool  ?
+       if (array_key_exists('GET',$this->routes) &&
+           array_key_exists($scope,$this->routes['GET'] )&&
+           array_key_exists($name,$this->routes['GET'][$scope])) {
+
            $route = $this->routes['GET'][$scope][$name];
            $path = $route->getPath();
            $routeParams = $route->getParams();

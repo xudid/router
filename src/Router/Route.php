@@ -1,5 +1,5 @@
 <?php
-namespace xudid\Router;
+namespace Router;
 
 
 use Psr\Http\Message\RequestInterface;
@@ -76,6 +76,7 @@ class Route {
 
 
     /**
+     * @method match
      * @param RequestInterface $request
      * @return bool
      */
@@ -84,7 +85,6 @@ class Route {
         $path = $request->getUri()->getPath();
         $url = trim($path, '/');
         $pattern = "#^$this->path$#";
-        $matched = false ;
         if (!empty($this->params)) {
             $matched = $this->matchWithParams($url);
             return $matched? true : false;
@@ -111,7 +111,7 @@ class Route {
         $matches = [];
         while($i < $n) {
             $paramName = $params[$i];
-            var_dump($paramName);
+            
             if (array_key_exists($paramName, $this->params)) {
                $path = preg_replace("#:(\w+)#", '('.$this->params[$paramName].')', $this->path);
                $matched = preg_match("#^$path$#", $url, $matches);
@@ -120,8 +120,6 @@ class Route {
                   $this->values[$paramName] = $matches[$i];
               }
 
-               var_dump($matches);
-               var_dump($this->values);
            }
 
             $i++;
