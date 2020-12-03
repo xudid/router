@@ -89,7 +89,7 @@ class Route {
      * @return Route
      */
     public function setParams(array $params): Route
-    {   
+    {
         foreach ($params as $param) {
            $name = array_key_first($param);
            $expression = $param[$name];
