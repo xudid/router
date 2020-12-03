@@ -2,10 +2,12 @@
 namespace Router;
 
 
+use Doctrine\Common\Inflector\Inflector;
+use Entity\Traits\Hydratation;
 use Psr\Http\Message\RequestInterface;
 
 class Route {
-
+    use Hydratation;
     /**
      * @var $name string the route name
      */
@@ -35,7 +37,7 @@ class Route {
      * @param string $name
      * @param $callback
      */
-    public function __construct(string $path, string $name,$callback)
+    public function __construct(string $path = '', string $name ='',$callback = '')
     {
         $this->path = trim($path,'/');
         $this->name = $name;
@@ -51,12 +53,54 @@ class Route {
     }
 
     /**
+     * @param string $name
+     * @return Route
+     */
+    public function setName(string $name): Route
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+
+
+    /**
      * @return string
      */
     public function getPath(): string
     {
         return $this->path;
     }
+
+    /**
+     * @param string $path
+     * @return Route
+     */
+    public function setPath(string $path): Route
+    {
+        $this->path = trim($path,'/');
+        return $this;
+    }
+
+
+
+    /**
+     * @param array $params
+     * @return Route
+     */
+    public function setParams(array $params): Route
+    {   
+        foreach ($params as $param) {
+           $name = array_key_first($param);
+           $expression = $param[$name];
+           if (strlen($expression)) {
+               $this->with($name, $expression);
+           }
+        }
+        return $this;
+    }
+
+
 
     /**
      * @return array
@@ -77,28 +121,32 @@ class Route {
 
     /**
      * @method match
-     * @param RequestInterface $request
+     * @param string $path
      * @return bool
      */
-    public function match(RequestInterface $request)
+
+
+    public function match(string $path)
     {
-        $path = $request->getUri()->getPath();
-        $url = trim($path, '/');
+        $path = trim( $path, '/');
+        $queryString = strpos($path, '?');
+        if ($queryString) {
+            $path = substr($path, 0, $queryString);
+        }
         $pattern = "#^$this->path$#";
         if (!empty($this->params)) {
-            $pattern = $this->matchWithParams($url);
-
+            $pattern = $this->matchWithParams($path);
            }
-
-        $matched = preg_match($pattern, $url, $matches);
+        $matched = preg_match($pattern, $path, $matches);
         return $matched? true : false;
 
     }
 
     /**
+     * @param $urlPath
      * @return string
      */
-    private function matchWithParams($url)
+    private function matchWithParams($urlPath)
     {
 
         preg_match_all("#/:(\w+)#", $this->path, $matches);
@@ -112,7 +160,7 @@ class Route {
             
             if (array_key_exists($paramName, $this->params)) {
                $path = preg_replace("#:(\w+)#", '('.$this->params[$paramName].')', $this->path);
-               $matched = preg_match("#^$path$#", $url, $matches);
+               $matched = preg_match("#^$path$#", $urlPath, $matches);
               if ($matched) {
                   array_shift($matches);
                   $this->values[$paramName] = $matches[$i];
@@ -129,11 +177,14 @@ class Route {
      * @param string $paramName
      * @return bool
      */
-    private function hasParam(string $paramName) {
+    private function hasParam(string $paramName)
+    {
         return in_array($paramName,$this->params);
     }
 
     /**
+     * @param $paramName
+     * @param $regex
      * @return $this
      */
     public function with($paramName, $regex)
@@ -148,5 +199,32 @@ class Route {
     public function getCallback()
     {
         return $this->callback;
+    }
+
+    /**
+     * @param array|callable $callback
+     * @return Route
+     */
+    public function setCallback($callback)
+    {
+        $this->callback = $callback;
+        return $this;
+    }
+
+    /**
+     * Transform a ClassName in class_name
+     * @param string $className
+     * @return string
+     */
+    public static function makeName(string $className, string $action) : string
+    {
+        return Inflector::tableize($className . ucfirst($action));
+    }
+
+    private function getUrl(RequestInterface $request)
+    {
+        $path = $request->getUri()->getPath();
+        $url = trim($path, '/');
+        return $url;
     }
 }

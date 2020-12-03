@@ -1,7 +1,9 @@
 <?php
+
 namespace Router;
 
 
+use Exception;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -10,11 +12,6 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Router
 {
-    /**
-     * @var string $url
-     */
-    private $url = null;
-
     private $authorizedMethods = [];
     /**
      * @var array $routes
@@ -23,7 +20,6 @@ class Router
 
     /**
      * @param string $method
-     * @param string $scope
      * @param string $path
      * @param string $name
      * @param $callable
@@ -32,15 +28,17 @@ class Router
      */
     private function addRoute(
         string $method,
-        string $scope,
         string $path,
         string $name,
         $callable
     ): Route
     {
         if (in_array($method, $this->authorizedMethods)) {
+            if (!array_key_exists($method, $this->routes)) {
+                $this->routes[$method] = [];
+            }
             $route = new Route($path, $name, $callable);
-            $this->routes[$method][$scope][$name] = $route;
+            $this->routes[$method][$name] = $route;
             return $route;
         } else {
             throw new RouterException("Try to add a route with an unauthorized method");
@@ -50,7 +48,6 @@ class Router
 
     /**
      * Register a Route to a ressource asked with a HTTP POST method
-     * @param string $scope the logic url domain without a '/'
      * @param string $path the actual url path to the ressource with beginning '/'
      * @param string|null $name string to display in menu
      * @param array|callable $callable callback function to call if route match
@@ -61,20 +58,18 @@ class Router
      * @throws RouterException
      */
     public function get(
-        string $scope,
         string $path,
         string $name,
         $callable
     ): Route
     {
 
-        return $this->addRoute("GET", $scope, $path, $name, $callable);
+        return $this->addRoute("GET", $path, $name, $callable);
 
     }
 
     /**
      * Register a Route to a ressource asked with a HTTP POST method
-     * @param string $scope the logic url domain without a '/'
      * @param string $path the actual url path to the ressource with beginning '/'
      * @param string|null $name string to display in menu
      * @param array|callable $callable callback function to call if route match
@@ -85,19 +80,17 @@ class Router
      * @throws RouterException
      */
     public function post(
-        string $scope,
         string $path,
         string $name,
         $callable
     ): Route
     {
 
-        return $this->addRoute("POST", $scope, $path, $name, $callable);
+        return $this->addRoute("POST", $path, $name, $callable);
 
     }
 
     /**
-     * @param string $scope
      * @param string $path
      * @param string $name
      * @param $callable
@@ -105,19 +98,17 @@ class Router
      * @throws RouterException
      */
     public function put(
-        string $scope,
         string $path,
         string $name,
         $callable
     ): Route
     {
 
-        return $this->addRoute("PUT", $scope, $path, $name, $callable);
+        return $this->addRoute("PUT", $path, $name, $callable);
 
     }
 
     /**
-     * @param string $scope
      * @param string $path
      * @param string $name
      * @param $callable
@@ -125,19 +116,17 @@ class Router
      * @throws RouterException
      */
     public function delete(
-        string $scope,
         string $path,
         string $name,
         $callable
     ): Route
     {
 
-        return $this->addRoute("DELETE", $scope, $path, $name, $callable);
+        return $this->addRoute("DELETE", $path, $name, $callable);
 
     }
 
     /**
-     * @param string $scope
      * @param string $path
      * @param string $name
      * @param $callable
@@ -145,39 +134,33 @@ class Router
      * @throws RouterException
      */
     public function options(
-        string $scope,
         string $path,
         string $name,
         $callable
     ): Route
     {
 
-        return $this->addRoute("OPTIONS", $scope, $path, $name, $callable);
+        return $this->addRoute("OPTIONS", $path, $name, $callable);
 
     }
 
     public function match(ServerRequestInterface $request): ?Route
     {
-        $this->url = ($request->getUri()->getPath());
-        $parts = explode('/', $this->url);
-        $scope = $parts[0];
-        if (empty($scope)) {
-            $scope = "default";
-        }
         $method = $request->getMethod();
         $matchedRoute = null;
         //Enigmatic request
-        if (!isset($this->routes[$method][$scope])) {
+        if (!isset($this->routes[$method])) {
             return $matchedRoute;
         }
 
         //Walk through the routes
-        foreach ($this->routes[$method][$scope] as $name => $route) {
-            if ($route->match($request)) {
-                $matchedRoute =  $route;
+        foreach ($this->routes[$method] as $name => $route) {
+            if ($route->match($request->getUri()->getPath())) {
+                $matchedRoute = $route;
                 break;
             }
         }
+
         return $matchedRoute;
     }
 
@@ -194,22 +177,23 @@ class Router
 
     /**
      * @param string $name the name of the we want to generate an url from
-     * @param array $param parameters needed to generate this url
+     * @param array $params
+     * @param string $method
      * @return string
+     * @throws Exception
      * @throw RouterException
      */
-    public function generateUrl(string $scope, string $name, array $params = [])
+    public function generateUrl(string $name, array $params = [], string $method = 'GET')
     {
-        $url = "test";
-        //Does it need an isRouteExist($method,$scope,$name):bool  ?
-        if (array_key_exists('GET', $this->routes) &&
-            array_key_exists($scope, $this->routes['GET']) &&
-            array_key_exists($name, $this->routes['GET'][$scope])) {
+        //Does it need an isRouteExist($method,$name):bool  ?
+        if (array_key_exists($method, $this->routes) &&
+            array_key_exists($name, $this->routes[$method])) {
 
-            $route = $this->routes['GET'][$scope][$name];
+            $route = $this->routes[$method][$name];
             $path = $route->getPath();
             $routeParams = $route->getParams();
-            foreach ($params as $key => $value) {
+
+            foreach ($routeParams as $key => $value) {
                 if (array_key_exists($key, $routeParams)) {
                     $pattern = "#(:" . $key . ")#";
                     $replacement = $params[$key];
@@ -217,11 +201,28 @@ class Router
                 }
             }
             $url = '/' . $path;
+        } else {
+            throw new Exception(
+                sprintf(
+                    'Can not generate url, Route with name %s and method %s does not exist',
+                    $name,
+                    $method
+                )
+            );
         }
 
         return $url;
 
     }
+
+    /**
+     * @return array
+     */
+    public function getAuthorizedMethods(): array
+    {
+        return $this->authorizedMethods;
+    }
+
 
     /**
      * @param array $authorizedMethods
@@ -232,8 +233,38 @@ class Router
         return $this;
     }
 
+    public function authorize(string $method)
+    {
+        return in_array($method, $this->authorizedMethods);
+    }
 
+    /**
+     * @return array
+     */
+    public function getRoutes(): array
+    {
+        return $this->routes;
+    }
+
+    /**
+     * @param array $routes
+     * @return Router
+     */
+    public function setRoutes(array $routes): Router
+    {
+        $this->routes = array_merge_recursive($this->routes, $routes);
+        return $this;
+    }
+
+
+    public function getRoute(string $method, string $name)
+    {
+        if (!array_key_exists($method, $this->routes)) {
+            return false;
+        }
+        if (array_key_exists($name, $this->routes[$method])) {
+            return $this->routes[$method][$name];
+        }
+        return false;
+    }
 }
-
-
-?>
