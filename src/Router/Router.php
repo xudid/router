@@ -33,7 +33,7 @@ class Router
         $callable
     ): Route
     {
-        if (in_array($method, $this->authorizedMethods)) {
+        if ($this->authorize($method)) {
             if (!array_key_exists($method, $this->routes)) {
                 $this->routes[$method] = [];
             }
