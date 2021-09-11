@@ -3,11 +3,11 @@ namespace Router;
 
 
 use Doctrine\Common\Inflector\Inflector;
-use Entity\Traits\Hydratation;
+use Core\Traits\Hydrate;
 use Psr\Http\Message\RequestInterface;
 
 class Route {
-    use Hydratation;
+    use Hydrate;
     /**
      * @var $name string the route name
      */

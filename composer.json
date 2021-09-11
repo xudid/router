@@ -1,28 +1,29 @@
 {
-    "name": "xudid/router",
-    "description": "A router for PHP Apps",
-    "type": "library",
-    "require-dev": {
-        "phpunit/phpunit": "^8.3",
-        "symfony/var-dumper": "^5.0"
-    },
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Didier Moindreau",
-            "email": "dmoindreau@gmail.com"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-                    "Router\\": "src/Router/"
-                 }
-    },
-    "require": {
-        "guzzlehttp/psr7": "^1.6",
-        "psr/http-server-middleware": "^1.0",
-        "psr/http-message": "^1.0",
-        "doctrine/inflector": "^1.3",
-        "xudid/entity": "^0.02.2"
+  "name": "xudid/router",
+  "description": "A router for PHP Apps",
+  "type": "library",
+  "minimum-stability": "dev",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Didier Moindreau",
+      "email": "dmoindreau@gmail.com"
     }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Router\\": "src/Router/"
+    }
+  },
+  "require": {
+    "guzzlehttp/psr7": "^1.6",
+    "psr/http-server-middleware": "^1.0",
+    "psr/http-message": "^1.0",
+    "doctrine/inflector": "^1.3",
+    "xudid/core": "dev-master"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.3",
+    "symfony/var-dumper": "^5.0"
+  }
 }
