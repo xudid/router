@@ -85,9 +85,7 @@ class Router
         $callable
     ): Route
     {
-
         return $this->addRoute("POST", $path, $name, $callable);
-
     }
 
     /**
@@ -103,9 +101,7 @@ class Router
         $callable
     ): Route
     {
-
         return $this->addRoute("PUT", $path, $name, $callable);
-
     }
 
     /**
@@ -121,9 +117,7 @@ class Router
         $callable
     ): Route
     {
-
         return $this->addRoute("DELETE", $path, $name, $callable);
-
     }
 
     /**
@@ -139,9 +133,7 @@ class Router
         $callable
     ): Route
     {
-
         return $this->addRoute("OPTIONS", $path, $name, $callable);
-
     }
 
     public function match(ServerRequestInterface $request): ?Route
@@ -186,15 +178,13 @@ class Router
     public function generateUrl(string $name, array $params = [], string $method = 'GET')
     {
         //Does it need an isRouteExist($method,$name):bool  ?
-        if (array_key_exists($method, $this->routes) &&
-            array_key_exists($name, $this->routes[$method])) {
-
-            $route = $this->routes[$method][$name];
+		$route = $this->getRoute($method, $name);
+        if ($route) {
             $path = $route->getPath();
             $routeParams = $route->getParams();
 
             foreach ($routeParams as $key => $value) {
-                if (array_key_exists($key, $routeParams)) {
+                if (array_key_exists($key, $params)) {
                     $pattern = "#(:" . $key . ")#";
                     $replacement = $params[$key];
                     $path = preg_replace($pattern, $replacement, $path);
@@ -210,9 +200,7 @@ class Router
                 )
             );
         }
-
         return $url;
-
     }
 
     /**
