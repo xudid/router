@@ -153,4 +153,13 @@ class RouteTest extends TestCase
         $this->assertStringContainsStringIgnoringCase('users_roles',$result1);
         $this->assertStringContainsStringIgnoringCase('user',$result2);
     }
+
+	public function testRouteWithAction()
+	{
+		$route = new Route('/action', '', 'Action::class');
+		$this->assertIsString($route->getAction());
+		$this->assertNull($route->getCallback());
+		$this->assertEmpty($route->getController());
+		$this->assertEmpty($route->getMethod());
+	}
 }
