@@ -36,13 +36,12 @@ class RouterMiddleware implements  MiddlewareInterface
         $response = $handler->handle($request);
         $route = $this->router->match($request);
         if ($route) {
-            $handler->handle($request
-                ->withAttribute("success", true)
-                ->withAttribute("route", $route)
-            );
+            $request = $request->withAttribute("success", true)
+                ->withAttribute("route", $route);
+            $handler->handle($request);
         } else {
-            $handler->handle($request
-                ->withAttribute("success", false));
+            $request = $request->withAttribute("success", false);
+            $handler->handle($request);
         }
 
         return $response;

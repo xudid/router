@@ -2,9 +2,6 @@
     "name": "xudid/router",
     "description": "A router for PHP Apps",
     "type": "library",
-    "require-dev": {
-        "phpunit/phpunit": "^8.3"
-    },
     "license": "MIT",
     "authors": [
         {
@@ -20,6 +17,12 @@
     "require": {
         "guzzlehttp/psr7": "^2.3.0",
         "psr/http-server-middleware": "^1.0",
-        "psr/http-message": "^1.0"
-    }
+        "psr/http-message": "^1.0",
+        "doctrine/inflector": "^1.3",
+        "xudid/core": "dev-master"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.3",
+    "symfony/var-dumper": "^5.0"
+  }
 }
