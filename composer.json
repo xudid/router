@@ -18,7 +18,7 @@
         "guzzlehttp/psr7": "^2.3.0",
         "psr/http-server-middleware": "^1.0",
         "psr/http-message": "^1.0",
-        "doctrine/inflector": "^1.3",
+        "doctrine/inflector": "^2.0",
         "xudid/core": "^0.0.21"
   },
   "require-dev": {
