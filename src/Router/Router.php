@@ -26,7 +26,7 @@ class Router
      * @return Route
      * @throws RouterException
      */
-    private function addRoute(
+    public function addRoute(
         string $method,
         string $path,
         string $name,
