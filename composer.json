@@ -19,7 +19,7 @@
         "psr/http-server-middleware": "^1.0",
         "psr/http-message": "^1.0",
         "doctrine/inflector": "^2.0",
-        "xudid/core": "^0.0.21"
+        "xudid/core": "^0.0.22"
   },
   "require-dev": {
     "phpunit/phpunit": "^8.3",
