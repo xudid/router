@@ -5,49 +5,33 @@ namespace Router;
 
 use Closure;
 use Core\Traits\Hydrate;
-use Doctrine\Common\Inflector\Inflector;
+use Doctrine\Inflector\Rules\English\InflectorFactory;
 use Psr\Http\Message\RequestInterface;
 
 class Route
 {
 	use Hydrate;
 
-	/**
-	 * @var $name string the route name
-	 */
-	private string $name;
-	/**
-	 * @var $path string the resource path
-	 */
-	private string $path;
-
-	/**
-	 * @var array $params the route parameters
-	 */
-	private array $params = [];
-
-	/**
-	 * @var array $values parameters values when route match
-	 */
-	private array $values = [];
-
-	/**
-	 * @var Closure a callable or an array with a class and a method name and a callback
-	 */
-	private Closure $callback;
 	private string $action = '';
+    private ?Closure $callback = null;
 	private string $controller = '';
 	private string $method = '';
+	private string $name = '';
+	private array $params = [];
+	private string $path;
+    private string $pattern = '';
+	private array $values = [];
 
-	/**
+    /**
 	 * Route constructor.
-	 * @param string $path
-	 * @param string $name
 	 * @param Closure|string|array $callback
 	 */
 	public function __construct(string $path = '', string $name = '', mixed $callback = '')
 	{
-		$this->path = trim($path, '/');
+        $this->path = $this->cleanPath($path);
+        $this->parsePath();
+        $this->compilePattern();
+
 		$this->name = $name;
 		if (is_string($callback)) {
 			$this->action = $callback;
@@ -81,28 +65,50 @@ class Route
 		return $this;
 	}
 
-	/**
-	 * @return string
-	 */
+    private function parsePath()
+    {
+        preg_match_all("#/:(\w+)#", $this->path, $matches);
+        foreach ($matches[1] as $match) {
+            $this->params[$match] = Parameter::WORD;
+        }
+
+        return $this;
+    }
+
+    private function compilePattern(): static
+    {
+        $path = $this->getPath();
+        $pattern = $path;
+        foreach ($this->getParams() as $paramName => $expression) {
+            $replacement = '(?<' . $paramName .'>' . $expression . ')';
+            $pattern = preg_replace("#:(\w+)#", $replacement, $pattern, 1);
+        }
+
+        $this->pattern = $pattern;
+
+        return $this;
+    }
+
+    public function getPattern(): string
+    {
+        return $this->pattern;
+    }
+
 	public function getPath(): string
 	{
 		return $this->path;
 	}
 
-	/**
-	 * @param string $path
-	 * @return Route
-	 */
+
 	public function setPath(string $path): Route
 	{
-		$this->path = trim($path, '/');
+		$this->path = $this->cleanPath($path);
+        $this->parsePath();
+        $this->compilePattern();
 		return $this;
 	}
 
-	/**
-	 * @param array $params
-	 * @return Route
-	 */
+
 	public function setParams(array $params): Route
 	{
 		foreach ($params as $param) {
@@ -115,143 +121,94 @@ class Route
 		return $this;
 	}
 
-	/**
-	 * @return array
-	 */
 	public function getParams(): array
 	{
 		return $this->params;
 	}
 
-	/**
-	 * @return array
-	 */
 	public function getValues(): array
 	{
 		return $this->values;
 	}
 
-	/**
-	 * @method match
-	 * @param string $path
-	 * @return bool
-	 */
 	public function match(string $path): bool
 	{
-		$path = trim($path, '/');
-		$queryString = strpos($path, '?');
-		if ($queryString) {
-			$path = substr($path, 0, $queryString);
-		}
-		$pattern = "#^$this->path$#";
-		if (!empty($this->params)) {
-			$pattern = $this->matchWithParams($path);
-		}
-		$matched = preg_match($pattern, $path, $matches);
-		return (bool)$matched;
+		$path = $this->cleanPath($path);
+        $matched =  preg_match("#^$this->pattern$#", $path, $matches);
+        if ($matched !== 1) {
+            return false;
+        }
+
+        if (!$this->params) {
+            return true;
+        }
+
+        foreach (array_keys($this->params) as $paramName) {
+            $value = $matches[$paramName];
+            $this->values[$paramName] = $value;
+        }
+
+        return true;
 	}
 
-	/**
-	 * @param $urlPath
-	 * @return string
-	 */
-	private function matchWithParams($urlPath): string
-	{
+    private function cleanPath($path): string
+    {
+        $path = trim($path, '/');
+        $queryString = strpos($path, '?');
 
-		preg_match_all("#/:(\w+)#", $this->path, $matches);
-		$path = $this->path;
-		$i = 0;
-		$params = $matches[1];
-		$n = count($params);
-		$matches = [];
-		while ($i < $n) {
-			$paramName = $params[$i];
+        if ($queryString) {
+            $path = substr($path, 0, $queryString);
+        }
 
-			if (array_key_exists($paramName, $this->params)) {
-				$path = preg_replace("#:(\w+)#", '(' . $this->params[$paramName] . ')', $this->path);
-				$matched = preg_match("#^$path$#", $urlPath, $matches);
-				if ($matched) {
-					array_shift($matches);
-					$this->values[$paramName] = $matches[$i];
-				}
-			}
-			$i++;
-		}
-		return "#^$path$#";
-	}
+        return $path;
+    }
 
-	/**
-	 * @param string $paramName
-	 * @return bool
-	 */
 	private function hasParam(string $paramName): bool
 	{
-		return in_array($paramName, $this->params);
+		return array_key_exists($paramName, $this->params);
 	}
 
-	/**
-	 * @param $paramName
-	 * @param $regex
-	 * @return $this
-	 */
-	public function with($paramName, $regex)
+	public function with($paramName, $regex): static
 	{
 		$this->params[$paramName] = $regex;
+        $this->compilePattern();
 		return $this;
 	}
-
 
 	public function getCallback(): ?Closure
 	{
 		if (isset($this->callback)) {
-			return $this->callback;
+		    return null;
 		}
-		return null;
+        return $this->callback;
 	}
 
-	/**
-	 * @return string
-	 */
 	public function getAction(): string
 	{
 		return $this->action;
 	}
 
-	/**
-	 * @return string
-	 */
 	public function getController(): string
 	{
 		return $this->controller;
 	}
 
-	/**
-	 * @return string
-	 */
 	public function getMethod(): string
 	{
 		return $this->method;
 	}
 
-	/**
-	 * @param Closure $callback
-	 * @return Route
-	 */
-	public function setCallback(Closure $callback)
+	public function setCallback(Closure $callback): static
 	{
 		$this->callback = $callback;
 		return $this;
 	}
 
-	/**
-	 * Transform a ClassName in class_name
-	 * @param string $className
-	 * @param string $action
-	 * @return string
-	 */
 	public static function makeName(string $className, string $action): string
 	{
-		return Inflector::tableize($className . ucfirst($action));
+        $factory = new InflectorFactory();
+        $inflector = $factory->build();
+		return $inflector->tableize($className . ucfirst($action));
 	}
 
 	private function getUrl(RequestInterface $request): string
