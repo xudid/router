@@ -177,7 +177,7 @@ class Route
 
 	public function getCallback(): ?Closure
 	{
-		if (isset($this->callback)) {
+		if (!isset($this->callback)) {
 		    return null;
 		}
         return $this->callback;
