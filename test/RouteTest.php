@@ -10,36 +10,28 @@ class RouteTest extends TestCase
 {
     public function testCanConstruct()
     {
-        $route = new Route('/admin', 'route1', function () {
-            echo 'hello world';
-        });
+        $route = new Route('/admin', 'route1', fn() => '');
         self::assertNotNull($route, 'Route constructor must return an object instance');
         self::assertInstanceOf(Route::class, $route, 'Route constructor must return an object of Router/Route::class');
     }
 
     public function testGetNameReturnString()
     {
-        $route = new Route('/admin', 'route1', function () {
-            echo 'hello world';
-        });
+        $route = new Route('/admin', 'route1', fn() => '');
         $name = $route->getName();
         self::assertEquals('route1', $name);
     }
 
     public function testMatchReturnBool()
     {
-        $route = new Route('/admin', 'admin', function () {
-            echo 'hello world';
-        });
+        $route = new Route('/admin', 'admin', fn() => '');
         $matched = $route->match('/');
         self::assertIsBool($matched);
     }
 
     public function testWithReturnSelf()
     {
-        $route = new Route('/admin', 'admin', function () {
-            echo 'hello world';
-        });
+        $route = new Route('/admin', 'admin', fn() => '');
         $r = $route->with('id', '\d+');
         self::assertEquals($route, $r);
     }
@@ -47,12 +39,8 @@ class RouteTest extends TestCase
     public function testMatchSimpleRoute()
     {
         $routes = [
-            new Route('/simple1', 'route1', function () {
-                echo 'hello world';
-            }),
-            new Route('/simple', 'route2', function () {
-                echo 'hello world';
-            })
+            new Route('/simple1', 'route1', fn() => ''),
+            new Route('/simple', 'route2', fn() => '')
         ];
         $matched = null;
         foreach ($routes as $route) {
