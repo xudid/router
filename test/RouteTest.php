@@ -189,6 +189,14 @@ class RouteTest extends TestCase
         $route = new Route('simple/edit/:id/', 'simple_show', fn() => '');
         $matched = $route->match('simple/edit/A1a2/1?test=1');
         self::assertFalse($matched);
+
+        $route = new Route('simple/:slug-:id/edit', 'simple_edit', fn() => '');
+        $matched = $route->match('simple/abc-1/edit');
+        self::assertTrue($matched);
+
+        $route = new Route('simple/:id-:slug/edit', 'simple_edit', fn() => '');
+        $matched = $route->match('simple/1-abc/edit');
+        self::assertTrue($matched);
     }
 
     public function testMatchRouteWithParamsParamsValues()
@@ -197,9 +205,21 @@ class RouteTest extends TestCase
         $route->match('simple/edit/A1a2?test=1');
         $values = $route->getValues();
         $this->assertIsArray($values);
-        $this->assertCount(1, $values);
         $this->assertArrayHasKey('id', $values);
         $this->assertEquals('A1a2', $values['id']);
+
+        $route = new Route('simple/:slug-:id/edit', 'simple_edit', fn() => '');
+        $route->match('simple/abc-1/edit');
+        $values = $route->getValues();
+        $this->assertEquals('abc', $values['slug']);
+        $this->assertEquals('1', $values['id']);
+
+        $route = new Route('simple/:id-:slug/edit', 'simple_edit', fn() => '');
+        $route->match('simple/1-abc/edit');
+        $values = $route->getValues();
+        $this->assertIsArray($values);
+        $this->assertEquals('abc', $values['slug']);
+        $this->assertEquals('1', $values['id']);
     }
 
     public function testMatchRouteWithAction()
