@@ -60,6 +60,17 @@ class RouteTest extends TestCase
         self::assertTrue($matched);
     }
 
+    public function testRouteGetCallbackReturn()
+    {
+        $route = new Route('/', 'root', fn() => '');
+        $callback = $route->getCallback();
+        $this->assertInstanceOf(\Closure::class , $callback);
+
+        $route = new Route('/', 'root');
+        $callback = $route->getCallback();
+        $this->assertNull($callback);
+    }
+
     public function testNotMatchInteger()
     {
         $route = new Route('/', 'root', fn() => '');
