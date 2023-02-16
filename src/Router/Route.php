@@ -67,7 +67,7 @@ class Route
 
     private function parsePath()
     {
-        preg_match_all("#/:(\w+)#", $this->path, $matches);
+        preg_match_all("#:(\w+)#", $this->path, $matches);
         foreach ($matches[1] as $match) {
             $this->params[$match] = Parameter::WORD;
         }
