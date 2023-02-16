@@ -142,6 +142,25 @@ class RouteTest extends TestCase
         $this->assertArrayHasKey('id3', $routeParams);
     }
 
+    public function testRouteWithSlugAddParam()
+    {
+        $route = new Route('simple/:slug-:id/edit', 'simple_edit', fn() => '');
+
+        $routeParams = $route->getParams();
+        $this->assertNotEmpty($routeParams);
+        $this->assertArrayHasKey('slug', $routeParams);
+        $this->assertArrayHasKey('id', $routeParams);
+        $this->assertCount(2, $routeParams);
+
+        $route = new Route('simple/:id-:slug/edit', 'simple_edit', fn() => '');
+
+        $routeParams = $route->getParams();
+        $this->assertNotEmpty($routeParams);
+        $this->assertArrayHasKey('slug', $routeParams);
+        $this->assertArrayHasKey('id', $routeParams);
+        $this->assertCount(2, $routeParams);
+    }
+
     public function testMachRouteWithParam()
     {
         $route = new Route('simple/:id/edit', 'simple_edit', fn() => '');
