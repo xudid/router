@@ -266,4 +266,16 @@ class RouteTest extends TestCase
 		$this->assertEmpty($route->getController());
 		$this->assertEmpty($route->getMethod());
 	}
+
+    public function testRouteInvokationReturnResult()
+    {
+        $route = new Route('simple/new', 'simple_new', fn() => 'hello');
+        $result = $route();
+        $this->assertEquals('hello', $result);
+
+        $route = new Route('simple/:id', 'simple_new', function($id) {return 'hello' . $id;});
+        $route->match('/simple/1');
+        $result = $route();
+        $this->assertEquals('hello1', $result);
+    }
 }

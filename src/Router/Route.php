@@ -204,7 +204,14 @@ class Route
 		return $this;
 	}
 
-	public static function makeName(string $className, string $action): string
+    public function __invoke()
+    {
+        $result = call_user_func_array($this->getCallback(), $this->getValues());
+        return $result;
+    }
+
+
+    public static function makeName(string $className, string $action): string
 	{
         $factory = new InflectorFactory();
         $inflector = $factory->build();
