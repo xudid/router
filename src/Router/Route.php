@@ -12,39 +12,30 @@ class Route
 {
 	use Hydrate;
 
-	private string $action = '';
-    private ?Closure $callback = null;
-	private string $controller = '';
-	private string $method = '';
 	private string $name = '';
 	private array $params = [];
 	private string $path;
     private string $pattern = '';
 	private array $values = [];
+    private string $callableType = '';
+    /**
+     * @var mixed|string
+     */
+    private mixed $callable = null;
+    private $extension  = '';
 
     /**
 	 * Route constructor.
 	 * @param Closure|string|array $callback
 	 */
-	public function __construct(string $path = '', string $name = '', mixed $callback = '')
+	public function __construct(string $path = '', string $name = '', mixed $callable = null)
 	{
         $this->path = $this->cleanPath($path);
         $this->parsePath();
         $this->compilePattern();
 
 		$this->name = $name;
-		if (is_string($callback)) {
-			$this->action = $callback;
-		}
-
-		if (is_array($callback)) {
-			$this->controller = $callback[0];
-			$this->method = $callback[1];
-		}
-
-		if ($callback instanceof Closure) {
-			$this->callback = $callback;
-		}
+       $this->setCallable($callable);
 	}
 
 	/**
@@ -67,6 +58,11 @@ class Route
 
     private function parsePath()
     {
+        preg_match("#\.(\w+)$#", $this->path, $parts);
+        if ($parts) {
+            $this->extension = $parts[1];
+        }
+
         preg_match_all("#:(\w+)#", $this->path, $matches);
         foreach ($matches[1] as $match) {
             $this->params[$match] = Parameter::WORD;
@@ -163,7 +159,7 @@ class Route
         return $path;
     }
 
-	private function hasParam(string $paramName): bool
+	public function hasParam(string $paramName): bool
 	{
 		return array_key_exists($paramName, $this->params);
 	}
@@ -175,38 +171,37 @@ class Route
 		return $this;
 	}
 
-	public function getCallback(): ?Closure
-	{
-		if (!isset($this->callback)) {
-		    return null;
-		}
-        return $this->callback;
-	}
+    public function getCallable()
+    {
+        return $this->callable;
+    }
 
-	public function getAction(): string
-	{
-		return $this->action;
-	}
+    public function setCallable($callable)
+    {
+        $this->callable = $callable;
+        if (is_string($callable)) {
+            $this->callableType = 'action';
+        }
 
-	public function getController(): string
-	{
-		return $this->controller;
-	}
+        if (is_array($callable)) {
+            $this->callableType = 'controller';
+        }
 
-	public function getMethod(): string
-	{
-		return $this->method;
-	}
+        if ($callable instanceof Closure) {
+            $this->callableType = 'callback';
+        }
 
-	public function setCallback(Closure $callback): static
-	{
-		$this->callback = $callback;
-		return $this;
-	}
+        return $this;
+    }
+
+    public function getCallableType(): string
+    {
+        return $this->callableType;
+    }
 
     public function __invoke()
     {
-        $result = call_user_func_array($this->getCallback(), $this->getValues());
+        $result = call_user_func_array($this->getCallable(), $this->getValues());
         return $result;
     }
 
@@ -218,7 +213,12 @@ class Route
 		return $inflector->tableize($className . ucfirst($action));
 	}
 
-	private function getUrl(RequestInterface $request): string
+    public function getExtension()
+    {
+        return $this->extension;
+    }
+
+    private function getUrl(RequestInterface $request): string
 	{
 		$path = $request->getUri()->getPath();
 		return trim($path, '/');

@@ -4,6 +4,7 @@
 namespace Router;
 
 
+use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -11,15 +12,8 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class RouterMiddleware implements  MiddlewareInterface
 {
-    /**
-     * @var Router
-     */
     private Router $router;
 
-    /**
-     * RouterMiddleware constructor.
-     * @param Router $router
-     */
     public function __construct(Router $router)
     {
         $this->router = $router;
@@ -27,9 +21,7 @@ class RouterMiddleware implements  MiddlewareInterface
 
 
     /**
-     * @param ServerRequestInterface $request
-     * @param RequestHandlerInterface $handler
-     * @return ResponseInterface
+     * @throws Exception
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {

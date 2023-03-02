@@ -2,7 +2,6 @@
 
 namespace Router;
 
-
 use Exception;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -13,167 +12,120 @@ use Psr\Http\Message\ServerRequestInterface;
 class Router
 {
     private $authorizedMethods = [];
-    /**
-     * @var array $routes
-     */
     private $routes = array();
 
     /**
-     * @param string $method
-     * @param string $path
-     * @param string $name
-     * @param $callable
-     * @return Route
      * @throws RouterException
      */
-    public function addRoute(
-        string $method,
-        string $path,
-        string $name,
-        $callable
-    ): Route
+    public function addRoute(string $method, string $path, string $name, $callable): Route
     {
-        if ($this->authorize($method)) {
-            if (!array_key_exists($method, $this->routes)) {
-                $this->routes[$method] = [];
-            }
-            $route = new Route($path, $name, $callable);
-            $this->routes[$method][$name] = $route;
-            return $route;
-        } else {
+        if (!$method) {
+            throw new RouterException('Try to add a route without Http method');
+        }
+        if (!$this->authorize($method)) {
             throw new RouterException("Try to add a route with an unauthorized method");
         }
 
+        if ($this->isNamedRouteExists($method, $name)) {
+            throw new RouterException('Route name conflict when loading almost two routes have same method and same name');
+        }
+
+        if (!array_key_exists($method, $this->routes)) {
+            $this->routes[$method] = [];
+        }
+
+        $route = new Route($path, $name, $callable);
+        $this->routes[$method][$name] = $route;
+
+        return $route;
     }
 
     /**
-     * Register a Route to a ressource asked with a HTTP POST method
-     * @param string $path the actual url path to the ressource with beginning '/'
-     * @param string|null $name string to display in menu
-     * @param array|callable $callable callback function to call if route match
-     * the array contains in order an object , the name of a function to call
-     * on this object , the callback function to call after that
-     * @return Route
-     *
      * @throws RouterException
      */
-    public function get(
-        string $path,
-        string $name,
-        $callable
-    ): Route
+    public function any(string $path, string $name, $callable): array
     {
+        $routes = $this->some($this->getAuthorizedMethods(), $path, $name, $callable);
 
-        return $this->addRoute("GET", $path, $name, $callable);
-
+        return $routes;
     }
 
     /**
-     * Register a Route to a ressource asked with a HTTP POST method
-     * @param string $path the actual url path to the ressource with beginning '/'
-     * @param string|null $name string to display in menu
-     * @param array|callable $callable callback function to call if route match
-     * the array contains in order an object , the name of a function to call
-     * on this object , the callback function to call after that
-     * @return Route
-     *
      * @throws RouterException
      */
-    public function post(
-        string $path,
-        string $name,
-        $callable
-    ): Route
+    public function some($methods, $path, $name, $callable): array
     {
-        return $this->addRoute("POST", $path, $name, $callable);
+        $routes = [];
+        foreach ($methods as $method) {
+            $route = $this->addRoute($method, $path, $name, $callable);
+            $routes[$method] = $route;
+        }
+
+        return $routes;
     }
 
     /**
-     * @param string $path
-     * @param string $name
-     * @param $callable
-     * @return Route
      * @throws RouterException
      */
-    public function put(
-        string $path,
-        string $name,
-        $callable
-    ): Route
+    public function get(string $path, string $name, $callable): Route
     {
-        return $this->addRoute("PUT", $path, $name, $callable);
+        return $this->addRoute('GET', $path, $name, $callable);
     }
 
     /**
-     * @param string $path
-     * @param string $name
-     * @param $callable
-     * @return Route
      * @throws RouterException
      */
-    public function delete(
-        string $path,
-        string $name,
-        $callable
-    ): Route
+    public function post(string $path, string $name, $callable): Route
     {
-        return $this->addRoute("DELETE", $path, $name, $callable);
+        return $this->addRoute('POST', $path, $name, $callable);
     }
 
     /**
-     * @param string $path
-     * @param string $name
-     * @param $callable
-     * @return Route
      * @throws RouterException
      */
-    public function options(
-        string $path,
-        string $name,
-        $callable
-    ): Route
+    public function put(string $path, string $name, $callable): Route
     {
-        return $this->addRoute("OPTIONS", $path, $name, $callable);
+        return $this->addRoute('PUT', $path, $name, $callable);
     }
 
+    /**
+     * @throws RouterException
+     */
+    public function delete(string $path, string $name, $callable): Route
+    {
+        return $this->addRoute('DELETE', $path, $name, $callable);
+    }
+
+    /**
+     * @throws RouterException
+     */
+    public function options(string $path, string $name, $callable): Route
+    {
+        return $this->addRoute('OPTIONS', $path, $name, $callable);
+    }
+
+    /**
+     * @throws Exception
+     */
     public function match(ServerRequestInterface $request): ?Route
     {
         $method = $request->getMethod();
-        $matchedRoute = null;
-        //Enigmatic request
         if (!isset($this->routes[$method])) {
-            return $matchedRoute;
+            throw new RouterException('Router method not supported');
         }
 
         //Walk through the routes
-        foreach ($this->routes[$method] as $name => $route) {
+        foreach ($this->routes[$method] as $route) {
             if ($route->match($request->getUri()->getPath())) {
-                $matchedRoute = $route;
-                break;
+                return $route;
             }
         }
 
-        return $matchedRoute;
+        throw new RouterException('Route not found');
     }
 
     /**
-     * hasParams test if the path of the route has params
-     * like ":id" return true  if has params else return false
-     * @param string $url [description]
-     * @return bool        [description]
-     */
-    private function hasParams(string $url): bool
-    {
-        return preg_match('#:([\w]+)#', $url, $matches) ? true : false;
-    }
-
-    /**
-     * @param string $name the name of the we want to generate an url from
-     * @param array $params
-     * @param string $method
-     * @return string
      * @throws Exception
-     * @throw RouterException
      */
     public function generateUrl(string $name, array $params = [], string $method = 'GET')
     {
@@ -203,18 +155,11 @@ class Router
         return $url;
     }
 
-    /**
-     * @return array
-     */
     public function getAuthorizedMethods(): array
     {
         return $this->authorizedMethods;
     }
 
-
-    /**
-     * @param array $authorizedMethods
-     */
     public function setAuthorizedMethods(array $authorizedMethods): self
     {
         $this->authorizedMethods = $authorizedMethods;
@@ -226,33 +171,34 @@ class Router
         return in_array($method, $this->authorizedMethods);
     }
 
-    /**
-     * @return array
-     */
     public function getRoutes(): array
     {
         return $this->routes;
     }
 
-    /**
-     * @param array $routes
-     * @return Router
-     */
     public function setRoutes(array $routes): Router
     {
         $this->routes = array_merge_recursive($this->routes, $routes);
         return $this;
     }
 
-
     public function getRoute(string $method, string $name)
+    {
+        $this->isNamedRouteExists($method, $name);
+
+        return $this->routes[$method][$name];
+    }
+
+    public function isNamedRouteExists($method, $name)
     {
         if (!array_key_exists($method, $this->routes)) {
             return false;
         }
-        if (array_key_exists($name, $this->routes[$method])) {
-            return $this->routes[$method][$name];
+
+        if (!array_key_exists($name, $this->routes[$method])) {
+            return false;
         }
-        return false;
+
+        return true;
     }
 }

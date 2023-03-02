@@ -60,14 +60,14 @@ class RouteTest extends TestCase
         self::assertTrue($matched);
     }
 
-    public function testRouteGetCallbackReturn()
+    public function testRouteGetCallableReturn()
     {
         $route = new Route('/', 'root', fn() => '');
-        $callback = $route->getCallback();
+        $callback = $route->getCallable();
         $this->assertInstanceOf(\Closure::class , $callback);
 
         $route = new Route('/', 'root');
-        $callback = $route->getCallback();
+        $callback = $route->getCallable();
         $this->assertNull($callback);
     }
 
@@ -261,10 +261,9 @@ class RouteTest extends TestCase
 	public function testRouteWithAction()
 	{
 		$route = new Route('/action', '', 'Action::class');
-		$this->assertIsString($route->getAction());
-		$this->assertNull($route->getCallback());
-		$this->assertEmpty($route->getController());
-		$this->assertEmpty($route->getMethod());
+		$this->assertIsString($route->getCallable());
+		$this->assertIsString($route->getCallableType());
+		$this->assertEquals('action', $route->getCallableType());
 	}
 
     public function testRouteInvokationReturnResult()
@@ -277,5 +276,43 @@ class RouteTest extends TestCase
         $route->match('/simple/1');
         $result = $route();
         $this->assertEquals('hello1', $result);
+    }
+
+    public function testRouteWithExtension()
+    {
+        $route = new Route('simple/:id.json', 'simple_new', function($id) {return 'hello' . $id;});
+        $extension = $route->getExtension();
+
+        $this->assertEquals('json', $extension);
+
+        $route = new Route('simple/:id', 'simple_new', function($id) {return 'hello' . $id;});
+        $extension = $route->getExtension();
+
+        $this->assertEmpty($extension);
+
+        $route = new Route('simple/:id.xml', 'simple_new', function($id) {return 'hello' . $id;});
+        $extension = $route->getExtension();
+
+        $this->assertEquals('xml', $extension);
+    }
+
+    public function testRouteWithExtensionMatchWithParams()
+    {
+        $route = new Route('simple/:id.xml', 'simple_new', function($id) {return 'hello' . $id;});
+        $path = 'simple/1.xml';
+        $route->match($path);
+        $result = $route->getValues();
+        $this->assertCount(1, $result);
+        $this->assertEquals('xml', $route->getExtension());
+
+        $route = new Route('simple/:id1/:id2.xml', 'simple_new', function($id) {return 'hello' . $id;});
+        $path = 'simple/1/2.xml';
+        $route->match($path);
+        $result = $route->getValues();
+        $this->assertCount(2, $result);
+        $this->assertEquals(1, $result['id1']);
+        $this->assertEquals(2, $result['id2']);
+        $this->assertEquals('xml', $route->getExtension());
+
     }
 }

@@ -14,12 +14,18 @@
                     "Router\\": "src/Router/"
                  }
     },
-    "require": {
+  "autoload-dev": {
+    "psr-4": {
+      "Illusion\\": "test/Illusion",
+      "Test\\": "test/"
+    }
+  },
+  "require": {
         "guzzlehttp/psr7": "^2.3.0",
         "psr/http-server-middleware": "^1.0",
         "psr/http-message": "^1.0",
         "doctrine/inflector": "^2.0",
-        "xudid/core": "^0.0.22"
+        "xudid/core": "^0.0.24"
   },
   "require-dev": {
     "phpunit/phpunit": "^8.3",

@@ -1,6 +1,6 @@
 <?php
 
-use Router\Loader;
+use Router\PhpFileLoader;
 use PHPUnit\Framework\TestCase;
 use Router\Route;
 
@@ -10,28 +10,13 @@ class LoaderTest extends TestCase
 	{
 		$router = new Router\Router();
 		$router->setAuthorizedMethods(['GET']);
-		return new Loader($router);
+		return new PhpFileLoader($router);
 	}
 
 	public function testLoad()
 	{
-		$route = [
-			[
-				'action' => [
-					'description' => 'test',
-					'type' => 'SHOW'
-				],
-				'method' => 'GET',
-				'name' => 'test_show',
-				'path' => '/test/:id',
-				'callback' => function () {
-					echo "loaded";
-				},
-				'params' => [['id' => '[0-9]+']]
-			]
-		];
 		$loader = $this->getLoader();
-		$loadedRoutes = $loader->load($route);
+		$loadedRoutes = $loader->load('test/ressources/dat_set1.php');
 		$this->assertArrayHasKey('GET',$loadedRoutes);
 		$this->assertArrayHasKey('test_show',$loadedRoutes['GET']);
 		$this->assertInstanceOf(Route::class, $loadedRoutes['GET']['test_show']);
@@ -39,24 +24,8 @@ class LoaderTest extends TestCase
 
 	public function testLoadAnonymousRoutes()
 	{
-		$routes = [
-			[
-				'method' => 'GET',
-				'path' => '/test/:id',
-				'callback' => function () {
-					echo "loaded";
-				},
-			],
-			[
-				'method' => 'GET',
-				'path' => '/test2/:id',
-				'callback' => function () {
-					echo "loaded2";
-				},
-			]
-		];
 		$loader = $this->getLoader();
-		$loadedRoutes = $loader->load($routes);
-		$this->assertCount(count($routes), $loadedRoutes['GET']);
+		$loadedRoutes = $loader->load('test/ressources/data_set2.php');
+		$this->assertCount(2, $loadedRoutes['GET']);
 	}
 }
