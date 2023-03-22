@@ -9,22 +9,18 @@ class PhpFileLoader
 {
 	private Router $router;
 
-	/**
-	 * @param Router $router
-	 */
 	public function __construct(Router $router)
 	{
 		$this->router = $router;
 	}
 
-	/**
-	 * @param array $routes
-	 * @return array
-	 * @throws Exception
-	 */
-	public function load(string $filePath): array
+    /**
+     * @throws RouterException
+     */
+    public function load(string $filePath): array
 	{
         $absolutePath = Path::absolute($filePath);
+        dump($absolutePath);
         $config = require($absolutePath);
         $authorizedMethods = $config['authorized_methods'] ?? [];
         $this->router->setAuthorizedMethods($authorizedMethods);
