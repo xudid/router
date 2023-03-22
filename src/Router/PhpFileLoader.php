@@ -19,9 +19,7 @@ class PhpFileLoader
      */
     public function load(string $filePath): array
 	{
-        $absolutePath = Path::absolute($filePath);
-        dump($absolutePath);
-        $config = require($absolutePath);
+        $config = require($filePath);
         $authorizedMethods = $config['authorized_methods'] ?? [];
         $this->router->setAuthorizedMethods($authorizedMethods);
 
