@@ -2,34 +2,35 @@
 
 namespace Router\Processor;
 
-use Exception;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Router\Route;
 
 class Factory
 {
-    public static function create(RequestInterface $request, ResponseInterface $response, Route $route): ProcessorInterface
+    public static function create(Route $route, $resultKey = ''): ProcessorInterface
     {
         $callable = $route->getCallable();
         if (!$callable) {
-            throw new Exception();
+            return new NullProcessor();
         }
+
         $processor = null;
         switch ($route->getCallableType()) {
             case 'action':
-                $processor = new Action($response);
+                $processor = new Action($callable, $route->getValues());
                 break;
             case 'controller':
-                $processor = new Controller($request, $response);
+                $processor = new Controller($callable, $route->getValues());
                 break;
             case 'callback':
-                $processor = new Callback($response);
+                $processor = new Callback($callable, $route->getValues());
                 break;
+            default:
+                $processor = new NullProcessor();
         }
 
-        $processor->setCallable($callable);
-        $processor->setparams($route->getValues());
+        if ($resultKey) {
+            $processor = $processor->withResultKey($resultKey);
+        }
 
         return $processor;
     }

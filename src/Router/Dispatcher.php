@@ -2,40 +2,41 @@
 
 namespace Router;
 
-use Exception;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Router\Processor\Factory;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Router\Processor\NullProcessor;
+use Router\Processor\ProcessorInterface;
 
 class Dispatcher
 {
-    private ResponseInterface $response;
-    private Factory $processorFactory;
+    private ProcessorInterface $processor;
+    private RequestHandlerInterface $handler;
     private RequestInterface $request;
+    private ResponseInterface $response;
 
-    public function __construct(Factory $processorFactory, RequestInterface $request, ResponseInterface $response)
+    public function __construct(ProcessorInterface $processor, RequestInterface $request, RequestHandlerInterface &$handler)
     {
-        $this->processorFactory = $processorFactory;
-        $this->response = $response;
+        $this->processor = $processor;
+        $this->response = $handler->handle($request);
         $this->request = $request;
+        $this->handler = $handler;
     }
 
 
-    public function handle(?Route $route = null): ResponseInterface
+    public function dispatch(Route $route): ResponseInterface
     {
-        try {
-            if ($route === null) {
-                $response = $this->response->withStatus(404);
-                return $response;
-            }
-
-            $processor = $this->processorFactory::create($this->request, $this->response, $route);
-            $response = $processor->execute();
-
-            return  $response;
-        } catch (Exception $ex) {
-            $response = $this->response->withStatus(500);
-            return $response;
+        if (is_null($route->getCallable())) {
+            $this->response = $this->response->withStatus(404);
+            return $this->response;
         }
+
+        if ($this->processor instanceof NullProcessor) {
+            $this->response = $this->response->withStatus(500);
+            return $this->response;
+        }
+
+        return $this->processor->process($this->request, $this->handler);
     }
 }

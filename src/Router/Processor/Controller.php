@@ -3,53 +3,42 @@
 namespace Router\Processor;
 
 use Exception;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
-class Controller implements ProcessorInterface
+class Controller extends AbstractProcessor
 {
-    private ResponseInterface $response;
     private array $params = [];
     private string $controller;
     private string $method;
-    private RequestInterface $request;
 
-    public function __construct(RequestInterface $request, ResponseInterface $response)
-    {
-        $this->request = $request;
-        $this->response = $response;
-    }
-
-    public function setParams(array $params): ProcessorInterface
-    {
-        $this->params = $params;
-        return $this;
-    }
-
-    public function setCallable($callable): ProcessorInterface
+    public function __construct($callable, array $params = [])
     {
         [$this->controller, $this->method] = $callable;
-        return $this;
+        $this->params = $params;
     }
+
 
     /**
      * @throws Exception
      */
-    public function execute(): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (class_exists($this->controller)) {
-            $controller = new $this->controller($this->request, $this->response);
-            $method = $this->method;
-            if (method_exists($controller, $this->method)) {
-                $result = call_user_func_array([$controller, $method], $this->params);
-                return $result;
-            } else {
-                throw new Exception();
-            }
-        } else {
+        if (!class_exists($this->controller)) {
             throw new Exception();
         }
 
-        return $this->response;
+        $response = $handler->handle($request);
+        $controller = new $this->controller($request, $response);
+        if (!method_exists($controller, $this->method)) {
+            throw new Exception();
+        }
+
+        $method = $this->method;
+        $result = call_user_func_array([$controller, $method], $this->params);
+        $request = $request->withAttribute($this->resultKey, $result);
+        $handler->handle($request);
+        return $response;
     }
 }

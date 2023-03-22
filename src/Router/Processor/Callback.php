@@ -3,40 +3,31 @@
 namespace Router\Processor;
 
 use Exception;
-use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
-class Callback implements ProcessorInterface
+class Callback extends AbstractProcessor
 {
+    private $callable = '';
+    private array $params;
 
-    private Response $response;
-    private $callable;
-    private array $params = [];
-
-    public function __construct(ResponseInterface $response)
+    public function __construct($callable, array $params = [])
     {
-        $this->response = $response;
-    }
-
-    public function setParams(array $params): ProcessorInterface
-    {
+        $this->callable = $callable;
         $this->params = $params;
-        return $this;
     }
 
-    public function execute(): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (!$this->callable) {
             throw new Exception('Processor: need a callable to process');
         }
-        $result = call_user_func_array($this->callable, [$this->params]);
-        $this->response->getBody()->write($result);
-        return $this->response;
-    }
 
-    public function setCallable($callable): ProcessorInterface
-    {
-        $this->callable = $callable;
-        return $this;
+        $result = call_user_func_array($this->callable, [$this->params]);
+        $request = $request->withAttribute($this->resultKey, $result);
+        $response = $handler->handle($request);
+
+        return $response;
     }
 }

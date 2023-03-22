@@ -313,6 +313,5 @@ class RouteTest extends TestCase
         $this->assertEquals(1, $result['id1']);
         $this->assertEquals(2, $result['id2']);
         $this->assertEquals('xml', $route->getExtension());
-
     }
 }

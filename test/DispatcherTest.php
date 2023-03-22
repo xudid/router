@@ -2,6 +2,7 @@
 
 
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\ServerRequest;
 use Illusion\Illusion;
 use Psr\Http\Message\ResponseInterface;
 use Router\Dispatcher;
@@ -11,71 +12,76 @@ use Router\Route;
 
 class DispatcherTest extends TestCase
 {
+    private function makeProcessor($route = null)
+    {
+        $builder = $this->getMockBuilder(Route::class);
+        if (!$route) {
+            $route = $builder->getMock();
+            $route->method('getCallable')->willReturn(fn() => '');
+            $route->method('getCallableType')->willReturn('callback');
+        }
+
+        return Factory::create($route);
+    }
+
+    private function makeRequestHandler($content = '')
+    {
+        $builder = $this->getMockBuilder(\Psr\Http\Server\RequestHandlerInterface::class);
+        $mock = $builder->getMock();
+        $mock->method('handle')->willReturn(new Response(200, [], $content));
+
+        return $mock;
+    }
     public function testHandleReturnResponseInterface()
     {
-        $response = new Response(200, [], 'hello');
-        $dispatcher = new Dispatcher(new Factory(), \GuzzleHttp\Psr7\ServerRequest::fromGlobals(), $response);
-        $result = $dispatcher->handle();
+        $processor = $this->makeProcessor();
+        $requestHandler = $this->makeRequestHandler();
+        $dispatcher = new Dispatcher($processor, ServerRequest::fromGlobals(), $requestHandler);
+        $result = $dispatcher->dispatch(new Route());
         $this->assertInstanceOf(ResponseInterface::class, $result);
     }
 
-    public function testHandleRouteIsNullReturn404Response()
+    public function testHandleRouteWithNullCallableReturn404Response()
     {
-        $response = new Response(200, [], 'hello');
-        $dispatcher = new Dispatcher(new Factory(), \GuzzleHttp\Psr7\ServerRequest::fromGlobals(), $response);
-        $result = $dispatcher->handle(null);
+        $route = new Route('simple/new', 'simple_new', null);
+        $processor = $this->makeProcessor($route);
+        $requestHandler = $this->makeRequestHandler();
+        $dispatcher = new Dispatcher($processor, ServerRequest::fromGlobals(), $requestHandler);
+
+        $result = $dispatcher->dispatch($route);
         $this->assertInstanceOf(ResponseInterface::class, $result);
         $this->assertEquals(404, $result->getStatusCode());
     }
 
-    public function testHandleRouteWithNullCallableReturn500Response()
-    {
-        $response = new Response(200, [], 'hello');
-        $dispatcher = new Dispatcher(new Factory(), \GuzzleHttp\Psr7\ServerRequest::fromGlobals(), $response);
-        $route = new Route('simple/new', 'simple_new', null);
-
-        $result = $dispatcher->handle($route);
-        $this->assertInstanceOf(ResponseInterface::class, $result);
-        $this->assertEquals(500, $result->getStatusCode());
-    }
-
     public function testHandleRouteWithControllerAndMethodReturn200Response()
     {
-        $response = new Response(200, [], 'hello');
-        $dispatcher = new Dispatcher(new Factory(), \GuzzleHttp\Psr7\ServerRequest::fromGlobals(), $response);
+        $processor = $this->makeProcessor();
+        $requestHandler = $this->makeRequestHandler();
+        $dispatcher = new Dispatcher($processor, ServerRequest::fromGlobals(), $requestHandler);
         $className = Illusion::withClass('FakeController2')
             ->use('GuzzleHttp\Psr7\Response')
-            ->withMethod('test', "return new Response(200, [], 'hello 1, 2, 3');")
+            ->withMethod('test', "return 'hello 1, 2, 3';")
             ->project();
 
         $route = new Route('simple/new', 'simple_new', [$className, 'test']);
 
-        $result = $dispatcher->handle($route);
+        $result = $dispatcher->dispatch($route);
         $this->assertInstanceOf(ResponseInterface::class, $result);
         $this->assertEquals(200, $result->getStatusCode());
     }
 
     public function testHandleRouteWithActionReturn200Response()
     {
-        $response = new Response(200, [], 'hello');
-        $dispatcher = new Dispatcher(new Factory(), \GuzzleHttp\Psr7\ServerRequest::fromGlobals(), $response);
+        $processor = $this->makeProcessor();
+        $requestHandler = $this->makeRequestHandler();
+        $dispatcher = new Dispatcher($processor, ServerRequest::fromGlobals(), $requestHandler);
         $className = Illusion::withClass('Action')
             ->withMethod('handle', "return 'hello 1, 2, 3';")
             ->project();
         $route = new Route('simple/new', 'simple_new', $className);
 
-        $result = $dispatcher->handle($route);
+        $result = $dispatcher->dispatch($route);
         $this->assertInstanceOf(ResponseInterface::class, $result);
         $this->assertEquals(200, $result->getStatusCode());
-    }
-
-    public function testReturn200ResponseContainsExternalContent()
-    {
-        $response = new Response(200, [], 'hello');
-        $dispatcher = new Dispatcher(new Factory(), \GuzzleHttp\Psr7\ServerRequest::fromGlobals(), $response);
-        $route = new Route('simple/new', 'simple_new', fn() => '');
-
-        $result = $dispatcher->handle($route);
-        $this->assertStringContainsString('hello', $result->getBody()->getContents());
     }
 }

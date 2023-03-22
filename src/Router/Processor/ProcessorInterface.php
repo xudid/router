@@ -2,13 +2,13 @@
 
 namespace Router\Processor;
 
+use Closure;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
-interface ProcessorInterface
+interface ProcessorInterface extends MiddlewareInterface
 {
-    public function setParams(array $params): ProcessorInterface;
-
-    public function execute(): ResponseInterface;
-
-    public function setCallable($callable): ProcessorInterface;
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface;
 }

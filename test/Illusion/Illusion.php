@@ -58,11 +58,12 @@ class Illusion
             $this->body .= implode(', ', $method['params'] ?? []) . ') {' . PHP_EOL;
             $this->body .= "\t\t" . $method['body'] ?? '' . PHP_EOL;
             $this->body .=  '}';
-
-
         }
+
         $this->body .= PHP_EOL . '}';
+
         eval($this->head . $this->body);
+
         return $this->className;
     }
 }

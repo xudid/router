@@ -110,15 +110,6 @@ class RouterTest extends TestCase
 
     }
 
-    public function testNotMatchThrowException()
-    {
-        $this->router->post('/root', 'root', fn() => '');
-        $mockRequest = $this->getMockBuilder(ServerRequest::class);
-        $mockRequest->disableOriginalConstructor();
-        $this->expectException(RouterException::class);
-        $this->router->match($mockRequest->getMock());
-    }
-
     public function testNotMatchWithHttpMetthod()
     {
         $this->router->post('/root', 'root', fn() => '');
@@ -129,7 +120,7 @@ class RouterTest extends TestCase
         $this->router->match($mockRequest->getMock());
     }
 
-    public function testNotMatchRouteNotFound()
+    public function testNotMatchReturnRouteWithoutCallable()
     {
         $mockRequest = $this->getMockBuilder(ServerRequest::class);
         $mockRequest->disableOriginalConstructor();
@@ -140,9 +131,9 @@ class RouterTest extends TestCase
         $mock->method('getUri')->willReturn($uriMock);
 
         $this->router->get('/root2', 'root', fn() => '');
-        $this->expectException(RouterException::class);
-        $this->expectExceptionMessage('Route not found');
-        $this->router->match($mock);
+        $route = $this->router->match($mock);
+        $this->assertInstanceOf(Route::class, $route);
+        $this->assertNull($route->getCallable());
     }
     public function testGenerateUrl()
     {

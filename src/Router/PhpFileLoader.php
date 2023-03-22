@@ -25,9 +25,13 @@ class PhpFileLoader
 	public function load(string $filePath): array
 	{
         $absolutePath = Path::absolute($filePath);
-        $routes = require($absolutePath);
+        $config = require($absolutePath);
+        $authorizedMethods = $config['authorized_methods'] ?? [];
+        $this->router->setAuthorizedMethods($authorizedMethods);
+
         $hydratedRoutes = [];
-		foreach ($routes as $route) {
+        $routes = $config['routes'] ?? [];
+        foreach ($routes as $route) {
             if (!$this->routeHasKey($route,'method')) {
                 throw new Exception('Try to load a route without Http method');
             }

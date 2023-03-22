@@ -9,7 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
  * Router register Route(s) and parse them
  * with method run
  */
-class Router
+class Router implements RouterInterface
 {
     private $authorizedMethods = [];
     private $routes = array();
@@ -104,10 +104,7 @@ class Router
         return $this->addRoute('OPTIONS', $path, $name, $callable);
     }
 
-    /**
-     * @throws Exception
-     */
-    public function match(ServerRequestInterface $request): ?Route
+    public function match(ServerRequestInterface $request): Route
     {
         $method = $request->getMethod();
         if (!isset($this->routes[$method])) {
@@ -121,7 +118,7 @@ class Router
             }
         }
 
-        throw new RouterException('Route not found');
+        return new Route;
     }
 
     /**

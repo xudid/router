@@ -2,47 +2,37 @@
 namespace Router\Processor;
 
 use Exception;
-use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
-class Action implements ProcessorInterface
+class Action extends AbstractProcessor
 {
-    private Response $response;
     private array $params;
-    private $action;
+    private $callable;
 
-    public function __construct(Response $response)
+    public function __construct($callable, array $params = [])
     {
-        $this->response = $response;
-    }
-
-    public function setParams(array $params): ProcessorInterface
-    {
+        $this->callable = $callable;
         $this->params = $params;
-        return $this;
     }
 
-    public function setCallable($callable): ProcessorInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $this->action = $callable;
-        return $this;
-    }
-
-    public function execute(): ResponseInterface
-    {
-        if (class_exists($this->action)) {
-            $action = new $this->action();
-        } else {
-            throw new Exception();
-        }
-        
-        if (method_exists($action, 'handle')) {
-            $result = call_user_func_array([$action, 'handle'], $this->params);
-            $this->response->getBody()->write($result);
-        } else {
+        if (!class_exists($this->callable)) {
             throw new Exception();
         }
 
-        return $this->response;
+        $response = $handler->handle($request);
+        $action = new $this->callable($response);
+        if (!method_exists($action, 'handle')) {
+            throw new Exception();
+        }
+
+        $result = call_user_func_array([$action, 'handle'], [$this->params]);
+        $request = $request->withAttribute($this->resultKey, $result);
+        $response = $handler->handle($request);
+
+        return $response;
     }
 }
