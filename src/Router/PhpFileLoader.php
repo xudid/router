@@ -2,7 +2,6 @@
 
 namespace Router;
 
-use Core\FileSystem\Path;
 use Exception;
 
 class PhpFileLoader
