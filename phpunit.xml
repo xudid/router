@@ -1,4 +1,9 @@
-<phpunit bootstrap="vendor/autoload.php" colors="true" stopOnFailure="false">
+<phpunit
+        bootstrap="vendor/autoload.php"
+        testdox="true"
+        colors="true"
+        stopOnFailure="false"
+>
   <testsuites>
     <testsuite name="router">
       <directory>test</directory>
