@@ -135,16 +135,4 @@ class RouterTest extends TestCase
         $this->assertInstanceOf(Route::class, $route);
         $this->assertNull($route->getCallable());
     }
-    public function testGenerateUrl()
-    {
-        $this->router->get('/simple/:id','simple_show', fn() => '')
-			->with('id','[\d+]');
-        $url = $this->router->generateUrl('simple_show', ['id' =>3]);
-
-        self::assertEquals('/simple/3',$url);
-        $this->router->get('/simple1/:id/:a_id','simple_show_2', fn() => '')
-			->with('id','[\d+]')->with('a_id','[\d+]');
-        $url = $this->router->generateUrl( 'simple_show_2',['id' =>3,'a_id' =>2]);
-        self::assertEquals('/simple1/3/2',$url);
-    }
 }

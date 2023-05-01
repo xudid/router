@@ -112,44 +112,14 @@ class Router implements RouterInterface
         }
 
         //Walk through the routes
+        $path = $request->getUri()->getPath();
         foreach ($this->routes[$method] as $route) {
-            if ($route->match($request->getUri()->getPath())) {
+            if ($route->match($path)) {
                 return $route;
             }
         }
 
         return new Route;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function generateUrl(string $name, array $params = [], string $method = 'GET')
-    {
-        //Does it need an isRouteExist($method,$name):bool  ?
-		$route = $this->getRoute($method, $name);
-        if ($route) {
-            $path = $route->getPath();
-            $routeParams = $route->getParams();
-
-            foreach ($routeParams as $key => $value) {
-                if (array_key_exists($key, $params)) {
-                    $pattern = "#(:" . $key . ")#";
-                    $replacement = $params[$key];
-                    $path = preg_replace($pattern, $replacement, $path);
-                }
-            }
-            $url = '/' . $path;
-        } else {
-            throw new Exception(
-                sprintf(
-                    'Can not generate url, Route with name %s and method %s does not exist',
-                    $name,
-                    $method
-                )
-            );
-        }
-        return $url;
     }
 
     public function getAuthorizedMethods(): array
@@ -177,13 +147,6 @@ class Router implements RouterInterface
     {
         $this->routes = array_merge_recursive($this->routes, $routes);
         return $this;
-    }
-
-    public function getRoute(string $method, string $name)
-    {
-        $this->isNamedRouteExists($method, $name);
-
-        return $this->routes[$method][$name];
     }
 
     public function isNamedRouteExists($method, $name)
