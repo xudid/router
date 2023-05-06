@@ -33,7 +33,7 @@ trait RequestHandler
         return $this;
     }
 
-    public function getRequest()
+    public function getRequest(): ServerRequestInterface
     {
         return $this->request;
     }

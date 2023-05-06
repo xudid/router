@@ -2,7 +2,6 @@
 
 namespace Router;
 
-use Exception;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**

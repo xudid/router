@@ -2,6 +2,7 @@
 
 namespace Router;
 
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -17,8 +18,10 @@ class DispatcherMiddleware implements MiddlewareInterface
 
     private string $resultKey = '$result';
     private string $routeKey = 'route';
+    private ContainerInterface $container;
+    private Factory $processorFactory;
 
-    public function __construct(string $resultKey = '', string $routeKey = '')
+    public function __construct(ContainerInterface $container, string $resultKey = '', string $routeKey = '')
     {
         if ($resultKey) {
             $this->resultKey = $resultKey;
@@ -27,13 +30,16 @@ class DispatcherMiddleware implements MiddlewareInterface
         if ($routeKey) {
             $this->routeKey = $routeKey;
         }
+        $this->container = $container;
+        $this->processorFactory = new Factory($this->container);
     }
 
     function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $this->response = $handler->handle($request);
         $route = $request->getAttribute($this->routeKey);
-        $processor = Factory::create($route);
+
+        $processor = $this->processorFactory->create($route, $this->resultKey);
         $dispatcher = new Dispatcher($processor, $request, $handler);
         $this->response = $dispatcher->dispatch($route);
 

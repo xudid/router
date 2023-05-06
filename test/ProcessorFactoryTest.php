@@ -1,15 +1,15 @@
 <?php
 
-namespace Router;
+namespace Test;
 
 use Illusion\Illusion;
-use PHPUnit\Framework\TestCase;
 use Router\Processor\Action;
 use Router\Processor\Callback;
 use Router\Processor\Factory;
 use Router\Processor\ProcessorInterface;
+use Router\Route;
 
-class ProcessorFactoryTest extends TestCase
+class ProcessorFactoryTest extends \Test\Factory
 {
     public function testCreateMethodExists()
     {
@@ -20,14 +20,16 @@ class ProcessorFactoryTest extends TestCase
     public function testCreateReturnInstanceOfProcessorInterface()
     {
         $route = new Route('simple/new', 'simple_new', fn() => '');
-        $result = Factory::create($route);
+        $factory = $this->makeFactory();
+        $result = $factory->create($route);
         $this->assertInstanceOf(ProcessorInterface::class, $result);
     }
 
     public function testCreateReturnCallbackProcessor()
     {
         $route = new Route('simple/new', 'simple_new', fn() => '');
-        $result = Factory::create($route);
+        $factory = $this->makeFactory();
+        $result = $factory->create($route);
         $this->assertInstanceOf(Callback::class, $result);
     }
 
@@ -37,7 +39,8 @@ class ProcessorFactoryTest extends TestCase
             ->withMethod('handle', "return 'hello 1, 2, 3';")
             ->project();
         $route = new Route('simple/new', 'simple_new', $className);
-        $result = Factory::create($route);
+        $factory = $this->makeFactory();
+        $result = $factory->create($route);
         $this->assertInstanceOf(Action::class, $result);
     }
 }

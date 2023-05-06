@@ -2,6 +2,7 @@
 namespace Router\Processor;
 
 use Exception;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -10,11 +11,13 @@ class Action extends AbstractProcessor
 {
     private array $params;
     private $callable;
+    private ContainerInterface $container;
 
-    public function __construct($callable, array $params = [])
+    public function __construct(ContainerInterface $container, $callable, array $params = [])
     {
         $this->callable = $callable;
         $this->params = $params;
+        $this->container = $container;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -23,8 +26,7 @@ class Action extends AbstractProcessor
             throw new Exception();
         }
 
-        $response = $handler->handle($request);
-        $action = new $this->callable($response);
+        $action = $this->container->get($this->callable);
         if (!method_exists($action, 'handle')) {
             throw new Exception();
         }

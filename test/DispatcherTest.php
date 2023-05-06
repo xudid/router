@@ -1,37 +1,16 @@
 <?php
 
+namespace Test;
 
-use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 use Illusion\Illusion;
 use Psr\Http\Message\ResponseInterface;
 use Router\Dispatcher;
-use PHPUnit\Framework\TestCase;
-use Router\Processor\Factory;
 use Router\Route;
+use Test\Factory as TestFactory;
 
-class DispatcherTest extends TestCase
+class DispatcherTest extends TestFactory
 {
-    private function makeProcessor($route = null)
-    {
-        $builder = $this->getMockBuilder(Route::class);
-        if (!$route) {
-            $route = $builder->getMock();
-            $route->method('getCallable')->willReturn(fn() => '');
-            $route->method('getCallableType')->willReturn('callback');
-        }
-
-        return Factory::create($route);
-    }
-
-    private function makeRequestHandler($content = '')
-    {
-        $builder = $this->getMockBuilder(\Psr\Http\Server\RequestHandlerInterface::class);
-        $mock = $builder->getMock();
-        $mock->method('handle')->willReturn(new Response(200, [], $content));
-
-        return $mock;
-    }
     public function testHandleReturnResponseInterface()
     {
         $processor = $this->makeProcessor();

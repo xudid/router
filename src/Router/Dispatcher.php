@@ -4,7 +4,6 @@ namespace Router;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Router\Processor\NullProcessor;
 use Router\Processor\ProcessorInterface;

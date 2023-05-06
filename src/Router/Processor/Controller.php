@@ -3,6 +3,7 @@
 namespace Router\Processor;
 
 use Exception;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -12,9 +13,11 @@ class Controller extends AbstractProcessor
     private array $params = [];
     private string $controller;
     private string $method;
+    private ContainerInterface $container;
 
-    public function __construct($callable, array $params = [])
+    public function __construct(ContainerInterface $container, $callable, array $params = [])
     {
+        $this->container = $container;
         [$this->controller, $this->method] = $callable;
         $this->params = $params;
     }
@@ -30,7 +33,7 @@ class Controller extends AbstractProcessor
         }
 
         $response = $handler->handle($request);
-        $controller = new $this->controller($request, $response);
+        $controller = $this->container->get($this->controller);
         if (!method_exists($controller, $this->method)) {
             throw new Exception();
         }

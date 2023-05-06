@@ -2,31 +2,31 @@
 
 namespace Router\Processor;
 
+use Psr\Container\ContainerInterface;
 use Router\Route;
 
 class Factory
 {
-    public static function create(Route $route, $resultKey = ''): ProcessorInterface
+    private ContainerInterface $container;
+    public function __construct(ContainerInterface $container)
+    {
+
+        $this->container = $container;
+    }
+
+    public function create(Route $route, $resultKey = ''): ProcessorInterface
     {
         $callable = $route->getCallable();
         if (!$callable) {
             return new NullProcessor();
         }
 
-        $processor = null;
-        switch ($route->getCallableType()) {
-            case 'action':
-                $processor = new Action($callable, $route->getValues());
-                break;
-            case 'controller':
-                $processor = new Controller($callable, $route->getValues());
-                break;
-            case 'callback':
-                $processor = new Callback($callable, $route->getValues());
-                break;
-            default:
-                $processor = new NullProcessor();
-        }
+        $processor = match ($route->getCallableType()) {
+            'action' => new Action($this->container, $callable, $route->getValues()),
+            'controller' => new Controller($this->container, $callable, $route->getValues()),
+            'callback' => new Callback($callable, $route->getValues()),
+            default => new NullProcessor(),
+        };
 
         if ($resultKey) {
             $processor = $processor->withResultKey($resultKey);
