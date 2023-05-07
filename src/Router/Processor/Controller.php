@@ -33,6 +33,10 @@ class Controller extends AbstractProcessor
         }
 
         $response = $handler->handle($request);
+        // store request and response in container to auto-wire controller with the good messages
+        // make ContainerContract
+        $this->container->set(ServerRequestInterface::class, $request);
+        $this->container->set(ResponseInterface::class, $response);
         $controller = $this->container->get($this->controller);
         if (!method_exists($controller, $this->method)) {
             throw new Exception();
