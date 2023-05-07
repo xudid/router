@@ -16,7 +16,7 @@ class DispatcherMiddleware implements MiddlewareInterface
 {
     private ResponseInterface $response;
 
-    private string $resultKey = '$result';
+    private string $resultKey = 'result';
     private string $routeKey = 'route';
     private ContainerInterface $container;
     private Factory $processorFactory;
