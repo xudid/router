@@ -6,11 +6,14 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Router\Processor\ProcessorInterface;
 use Router\Route;
 use Router\Processor\Factory as ProcessorFactory;
+use Xudid\Container\Weaver;
+
 
 
 class Factory extends TestCase
@@ -24,9 +27,19 @@ class Factory extends TestCase
 
     protected function makeFactory($className = ''): ProcessorFactory
     {
-        $container = $this->makeContainer($className);
-        $factory = new ProcessorFactory($container);
+        $weaver = $this->makeWeaver($className);
+        $factory = new ProcessorFactory($weaver);
         return $factory;
+    }
+
+    public function makeWeaver($className, $makeArguments = [])
+    {
+        $builder = $this->getMockBuilder(Weaver::class)->disableOriginalConstructor();
+        $weaver = $builder->getMock();
+        if ($className) {
+            $weaver->method('make')->willReturn(new $className(...$makeArguments));
+        }
+        return $weaver;
     }
 
     protected function makeContainer($className)
@@ -61,5 +74,12 @@ class Factory extends TestCase
         });
 
         return $mock;
+    }
+
+    public function makeResponse()
+    {
+        $builder = $this->getMockBuilder(ResponseInterface::class);
+        $response = $builder->getMock();
+        return $response;
     }
 }

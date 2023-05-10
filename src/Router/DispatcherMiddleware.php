@@ -18,10 +18,9 @@ class DispatcherMiddleware implements MiddlewareInterface
 
     private string $resultKey = 'result';
     private string $routeKey = 'route';
-    private ContainerInterface $container;
     private Factory $processorFactory;
 
-    public function __construct(ContainerInterface $container, string $resultKey = '', string $routeKey = '')
+    public function __construct(Factory $factory, string $resultKey = '', string $routeKey = '')
     {
         if ($resultKey) {
             $this->resultKey = $resultKey;
@@ -30,8 +29,8 @@ class DispatcherMiddleware implements MiddlewareInterface
         if ($routeKey) {
             $this->routeKey = $routeKey;
         }
-        $this->container = $container;
-        $this->processorFactory = new Factory($this->container);
+
+        $this->processorFactory = $factory;
     }
 
     function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface

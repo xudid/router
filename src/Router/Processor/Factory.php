@@ -2,16 +2,16 @@
 
 namespace Router\Processor;
 
-use Psr\Container\ContainerInterface;
 use Router\Route;
+use Xudid\Container\Weaver;
 
 class Factory
 {
-    private ContainerInterface $container;
-    public function __construct(ContainerInterface $container)
+    private Weaver $weaver;
+    public function __construct(Weaver $weaver)
     {
 
-        $this->container = $container;
+        $this->weaver = $weaver;
     }
 
     public function create(Route $route, $resultKey = ''): ProcessorInterface
@@ -22,8 +22,11 @@ class Factory
         }
 
         $processor = match ($route->getCallableType()) {
-            'action' => new Action($this->container, $callable, $route->getValues()),
-            'controller' => new Controller($this->container, $callable, $route->getValues()),
+            // Action + Controller => ObjectProcessor
+            // make a callback who call method on object with params
+            // Processor unique who execute callback
+            'action' => new Action($this->weaver, $callable, $route->getValues()),
+            'controller' => new Controller($this->weaver, $callable, $route->getValues()),
             'callback' => new Callback($callable, $route->getValues()),
             default => new NullProcessor(),
         };

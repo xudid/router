@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "118f2426ece0df4217a2b0922b5819d6",
+    "content-hash": "e4f591e37059553f8d70eaad76f7b4d6",
     "packages": [
         {
             "name": "doctrine/inflector",
@@ -960,6 +960,49 @@
                 }
             ],
             "time": "2023-04-18T09:26:27+00:00"
+        },
+        {
+            "name": "xudid/container",
+            "version": "0.0.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/xudid/container.git",
+                "reference": "5896b5de6da9019f0d0168bec7f05965bc63d45a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/xudid/container/zipball/5896b5de6da9019f0d0168bec7f05965bc63d45a",
+                "reference": "5896b5de6da9019f0d0168bec7f05965bc63d45a",
+                "shasum": ""
+            },
+            "require": {
+                "psr/container": "^2.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^10.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Xudid\\Container\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Didier Moindreau",
+                    "email": "dmoindreau@gmail.com"
+                }
+            ],
+            "description": "A PSR11 Container Interface implementation",
+            "support": {
+                "issues": "https://github.com/xudid/container/issues",
+                "source": "https://github.com/xudid/container/tree/0.0.0.2"
+            },
+            "time": "2023-05-10T17:02:15+00:00"
         },
         {
             "name": "xudid/core",

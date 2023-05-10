@@ -59,8 +59,8 @@ class CallableProcessorTest extends \Test\Factory
             ->withMethod('test', "return 'hello 1, 2, 3';")
             ->project();
 
-        $container = $this->makeContainer($className);
-        $processor = new Controller($container, [$className, 'test'], [1, 2, 3]);
+        $weaver = $this->makeWeaver($className);
+        $processor = new Controller($weaver, [$className, 'test'], [1, 2, 3]);
         $this->request = ServerRequest::fromGlobals();
         $processor->process($this->request, $this->makeRequestHandler());
         $this->assertStringContainsString('hello 1, 2, 3', $this->request->getAttribute('result') ?? '');
@@ -71,8 +71,12 @@ class CallableProcessorTest extends \Test\Factory
             ->withMethod('test', "return 'hello 1, 2, 3';")
             ->project();
 
-        $container = $this->makeContainer($className);
-        $processor = new Controller($container, [$className, 'test'], [1, 2, 3]);
+        $makeArguments = [
+            $this->request,
+            $this->makeResponse()
+        ];
+        $weaver = $this->makeWeaver($className, $makeArguments);
+        $processor = new Controller($weaver, [$className, 'test'], [1, 2, 3]);
         $processor->process(ServerRequest::fromGlobals(), $this->makeRequestHandler());
         $this->assertStringContainsString('hello 1, 2, 3', $this->request->getAttribute('result') ?? '');
 
@@ -80,8 +84,8 @@ class CallableProcessorTest extends \Test\Factory
             ->use('GuzzleHttp\Psr7\Response')
             ->withMethod('handle', "return 'hello 1, 2, 3';")
             ->project();
-        $container = $this->makeContainer($className);
-        $processor = new Action($container,  $className, [1, 2, 3]);
+        $weaver = $this->makeWeaver($className);
+        $processor = new Action($weaver,  $className, [1, 2, 3]);
         $processor->process($this->request, $this->makeRequestHandler());
         $this->assertStringContainsString('hello 1, 2, 3', $this->request->getAttribute('result'));
     }

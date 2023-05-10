@@ -3,21 +3,21 @@
 namespace Router\Processor;
 
 use Exception;
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Xudid\Container\Weaver;
 
 class Controller extends AbstractProcessor
 {
     private array $params = [];
     private string $controller;
     private string $method;
-    private ContainerInterface $container;
+    private Weaver $weaver;
 
-    public function __construct(ContainerInterface $container, $callable, array $params = [])
+    public function __construct(Weaver $weaver, $callable, array $params = [])
     {
-        $this->container = $container;
+        $this->weaver = $weaver;
         [$this->controller, $this->method] = $callable;
         $this->params = $params;
     }
@@ -33,11 +33,12 @@ class Controller extends AbstractProcessor
         }
 
         $response = $handler->handle($request);
-        // store request and response in container to auto-wire controller with the good messages
-        // make ContainerContract
-        $this->container->set(ServerRequestInterface::class, $request);
-        $this->container->set(ResponseInterface::class, $response);
-        $controller = $this->container->get($this->controller);
+
+        $constructorArguments = [
+            ServerRequestInterface::class => $request,
+            ResponseInterface::class => $response,
+        ];
+        $controller = $this->weaver->make($this->controller, $constructorArguments);
         if (!method_exists($controller, $this->method)) {
             throw new Exception();
         }
@@ -46,6 +47,7 @@ class Controller extends AbstractProcessor
         $result = call_user_func_array([$controller, $method], $this->params);
         $request = $request->withAttribute($this->resultKey, $result);
         $handler->handle($request);
+
         return $response;
     }
 }
